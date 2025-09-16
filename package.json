@@ -1,0 +1,55 @@
+{
+  "name": "@yourscope/browser-docx-merger",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "license": "MIT",
+  "description": "A comprehensive TypeScript library for merging DOCX files in the browser with full style, numbering, and relationship support",
+  "keywords": ["docx", "merge", "browser", "typescript", "word", "document", "office"],
+  "author": "Your Name <your.email@example.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/browser-docx-merger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/browser-docx-merger/issues"
+  },
+  "homepage": "https://github.com/yourusername/browser-docx-merger#readme",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "browser": "./dist/index.global.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./global": "./dist/index.global.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "tsup src/index.ts --format esm,iife --global-name DocxMerger --dts --minify --out-dir dist",
+    "dev": "tsup src/index.ts --format esm,iife --global-name DocxMerger --dts --watch --out-dir dist",
+    "preview": "ws --directory . --spa demo/index.html --port 5173",
+    "test": "vitest run --reporter=default",
+    "test:watch": "vitest --watch"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.0",
+    "jszip": "^3.10.1"
+  },
+  "devDependencies": {
+    "tsup": "^8.2.4",
+    "typescript": "^5.6.2",
+    "rimraf": "^5.0.5",
+    "local-web-server": "^5.3.0",
+    "vitest": "^2.1.1",
+    "jsdom": "^25.0.0",
+    "@types/jsdom": "^21.1.7"
+  }
+}

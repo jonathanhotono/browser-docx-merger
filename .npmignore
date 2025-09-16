@@ -1,0 +1,49 @@
+# Source files (only publish built dist/)
+src/
+tests/
+test/
+*.test.ts
+*.spec.ts
+
+# Development files
+demo/
+test-*.html
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+
+# Dev dependencies and configs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary and log files
+*.tmp
+*.temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment and cache
+.env*
+.cache
+.parcel-cache
+node_modules/
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Only include these in the package:
+# - dist/
+# - README.md
+# - LICENSE
+# - package.json

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Browser DOCX Merger – Demo</title>
+  <style>
+    body{font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, sans-serif; margin:0; background:#0b1020; color:#e7eaf3}
+    .wrap{max-width:960px;margin:24px auto;padding:0 16px}
+    .card{background:#121833;border:1px solid #233056;border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btn{appearance:none;border:1px solid #2b375f;border-radius:12px;background:#0f1530;color:#e7eaf3;padding:10px 14px;cursor:pointer}
+    .btn.primary{background:linear-gradient(180deg,#2a59ff,#2240ff);border-color:#2a59ff}
+    input[type="text"]{background:#0f1530;border:1px solid #233056;border-radius:10px;color:#e7eaf3;padding:8px 10px}
+    label{color:#9fb0cf}
+    .log{background:#050814;border:1px solid #1f2a4a;border-radius:12px;min-height:120px;white-space:pre-wrap;padding:12px}
+    .file-list{margin:12px 0}
+    .file-item{background:#0f1530;border:1px solid #233056;border-radius:8px;padding:12px;margin:4px 0;cursor:move;display:flex;align-items:center;gap:12px;transition:all 0.2s}
+    .file-item:hover{border-color:#445289;background:#1a2040}
+    .file-item.dragging{opacity:0.5;transform:rotate(2deg)}
+    .file-item.drag-over{border-color:#6ee7ff;background:#1a2850}
+    .file-drag-handle{color:#6ee7ff;font-size:16px;cursor:grab}
+    .file-drag-handle:active{cursor:grabbing}
+    .file-info{flex:1}
+    .file-name{font-weight:500;margin-bottom:2px}
+    .file-size{color:#9fb0cf;font-size:12px}
+    .file-remove{color:#ef4444;cursor:pointer;padding:4px 8px;border-radius:4px}
+    .file-remove:hover{background:#2a1a1a}
+    .file-list-empty{color:#9fb0cf;text-align:center;padding:20px;font-style:italic}
+  </style>
+  <script src="../dist/index.global.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>DOCX Merger – Demo</h1>
+      <p>Select two or more .docx files and merge them in the browser using the reusable library bundle.</p>
+      <div class="row" style="margin:12px 0">
+        <input id="files" class="btn" type="file" accept=".docx" multiple />
+        <button id="mergeBtn" class="btn primary">Merge → Download</button>
+        <button id="clearBtn" class="btn">Clear All</button>
+      </div>
+      
+      <div id="fileList" class="file-list"></div>
+      
+      <div class="row" style="margin:12px 0">
+        <label>Pattern: <input id="pattern" type="text" placeholder="Insert before paragraph containing this exact text"/></label>
+        <label><input id="insStart" type="checkbox"> Insert at start</label>
+        <label><input id="insEnd" type="checkbox" checked> Insert at end</label>
+        <label><input id="pageBreaks" type="checkbox" checked> Page breaks</label>
+      </div>
+      <div class="row" style="margin:12px 0">
+        <label><input id="mergeNumbering" type="checkbox" checked> Merge numbering</label>
+        <label><input id="mergeStyles" type="checkbox" checked> Merge styles</label>
+        <label><input id="mergeFootnotes" type="checkbox" checked> Merge foot/endnotes</label>
+      </div>
+      <div id="log" class="log"></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (q)=>document.querySelector(q);
+    const filesEl = $('#files');
+    const fileListEl = $('#fileList');
+    const logEl = $('#log');
+    let selectedFiles = [];
+    
+    function log(msg, level='info'){ const tag = level==='ok'?'✓':level==='warn'?'!':level==='err'?'✗':'•'; logEl.textContent += `\n${tag} ${msg}`; logEl.scrollTop = logEl.scrollHeight; }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function updateFileList() {
+      if (selectedFiles.length === 0) {
+        fileListEl.innerHTML = '<div class="file-list-empty">No documents selected. Choose .docx files to get started.</div>';
+        return;
+      }
+      
+      fileListEl.innerHTML = selectedFiles.map((file, index) => `
+        <div class="file-item" draggable="true" data-index="${index}">
+          <span class="file-drag-handle">⋮⋮</span>
+          <div class="file-info">
+            <div class="file-name">${index + 1}. ${file.name}</div>
+            <div class="file-size">${formatFileSize(file.size)}</div>
+          </div>
+          <span class="file-remove" onclick="removeFile(${index})">✕</span>
+        </div>
+      `).join('');
+      
+      // Add drag and drop handlers
+      setupDragAndDrop();
+    }
+
+    function setupDragAndDrop() {
+      const items = fileListEl.querySelectorAll('.file-item');
+      items.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragenter', handleDragEnter);
+        item.addEventListener('dragleave', handleDragLeave);
+        item.addEventListener('dragend', handleDragEnd);
+      });
+    }
+
+    let draggedIndex = null;
+
+    function handleDragStart(e) {
+      draggedIndex = parseInt(e.target.dataset.index);
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDragEnter(e) {
+      e.preventDefault();
+      e.target.closest('.file-item').classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      e.target.closest('.file-item').classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const dropIndex = parseInt(e.target.closest('.file-item').dataset.index);
+      
+      if (draggedIndex !== null && draggedIndex !== dropIndex) {
+        const draggedFile = selectedFiles[draggedIndex];
+        selectedFiles.splice(draggedIndex, 1);
+        selectedFiles.splice(dropIndex, 0, draggedFile);
+        updateFileList();
+      }
+      
+      // Clean up
+      fileListEl.querySelectorAll('.file-item').forEach(item => {
+        item.classList.remove('drag-over', 'dragging');
+      });
+      draggedIndex = null;
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+      fileListEl.querySelectorAll('.file-item').forEach(item => {
+        item.classList.remove('drag-over');
+      });
+      draggedIndex = null;
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      updateFileList();
+    }
+
+    window.removeFile = removeFile; // Make available to onclick handlers
+
+    filesEl.addEventListener('change', ()=>{
+      selectedFiles = Array.from(filesEl.files || []);
+      updateFileList();
+    });
+
+    $('#clearBtn').addEventListener('click', ()=>{
+      filesEl.value = '';
+      selectedFiles = [];
+      updateFileList();
+      logEl.textContent = '';
+    });
+
+    $('#mergeBtn').addEventListener('click', async ()=>{
+      try{
+        logEl.textContent='';
+        if(selectedFiles.length<2){ log('Select at least two .docx files', 'warn'); return; }
+        const options = {
+          pattern: $('#pattern').value.trim()||null,
+          insertStart: $('#insStart').checked,
+          insertEnd: $('#insEnd').checked,
+          pageBreaks: $('#pageBreaks').checked,
+          mergeNumbering: $('#mergeNumbering').checked,
+          mergeStyles: $('#mergeStyles').checked,
+          mergeFootnotes: $('#mergeFootnotes').checked,
+          onLog: log
+        };
+        const blob = await window.DocxMerger.mergeDocxFromFiles(selectedFiles, options);
+        const url = URL.createObjectURL(blob);
+        const a=document.createElement('a'); a.href=url; a.download='merged.docx'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1500);
+        log('Done','ok');
+      }catch(err){ console.error(err); log('Error: '+(err?.message||err),'err'); }
+    });
+
+    // Initialize empty state
+    updateFileList();
+  </script>
+</body>
+</html>

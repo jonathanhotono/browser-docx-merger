@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Global Variable</title>
+    <script src="dist/index.global.js"></script>
+</head>
+<body>
+    <h1>Testing DocxMerger Global Variable</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Test if DocxMerger is available globally
+        const resultDiv = document.getElementById('result');
+        
+        if (typeof window.DocxMerger !== 'undefined') {
+            resultDiv.innerHTML = `
+                <p style="color: green;">✅ SUCCESS: window.DocxMerger is available!</p>
+                <p>Available methods: ${Object.keys(window.DocxMerger).join(', ')}</p>
+                <p>Type of mergeDocxFromFiles: ${typeof window.DocxMerger.mergeDocxFromFiles}</p>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <p style="color: red;">❌ ERROR: window.DocxMerger is not available!</p>
+                <p>Available on window: ${Object.keys(window).filter(key => key.includes('Docx') || key.includes('Merger')).join(', ') || 'None found'}</p>
+            `;
+        }
+        
+        // Log to console for debugging
+        console.log('window.DocxMerger:', window.DocxMerger);
+        console.log('typeof window.DocxMerger:', typeof window.DocxMerger);
+        if (window.DocxMerger) {
+            console.log('DocxMerger methods:', Object.keys(window.DocxMerger));
+        }
+    </script>
+</body>
+</html>

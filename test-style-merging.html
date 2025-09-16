@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Style Merging</title>
+    <script src="dist/index.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .log { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin: 10px 0; border-radius: 3px; white-space: pre-wrap; font-family: monospace; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>DocxMerger Style Handling Test</h1>
+    
+    <div class="test-section">
+        <h2>Library Status</h2>
+        <div id="library-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Style Merging Test</h2>
+        <p>This test demonstrates comprehensive style handling including:</p>
+        <ul>
+            <li>Basic styles (styles.xml)</li>
+            <li>Font tables (fontTable.xml)</li>
+            <li>Document themes (theme1.xml)</li>
+            <li>Web settings (webSettings.xml)</li>
+            <li>Document settings (settings.xml)</li>
+        </ul>
+        
+        <h3>Test Options</h3>
+        <label><input type="checkbox" id="mergeStyles" checked> Merge Styles</label><br>
+        <label><input type="checkbox" id="mergeNumbering" checked> Merge Numbering</label><br>
+        <label><input type="checkbox" id="mergeFootnotes" checked> Merge Footnotes</label><br>
+        <label><input type="checkbox" id="pageBreaks" checked> Add Page Breaks</label><br>
+        
+        <h3>Merge Mode</h3>
+        <label><input type="radio" name="mergeMode" value="pattern" checked> Pattern-based (merge at "MERGE_HERE")</label><br>
+        <label><input type="radio" name="mergeMode" value="start"> Insert at start</label><br>
+        <label><input type="radio" name="mergeMode" value="end"> Insert at end</label><br>
+        
+        <h3>Test Files</h3>
+        <input type="file" id="fileInput" multiple accept=".docx" />
+        <br><br>
+        <button onclick="testStyleMerging()">Test Style Merging</button>
+        <button onclick="clearLog()">Clear Log</button>
+        
+        <h3>Log Output</h3>
+        <div id="log" class="log"></div>
+        
+        <h3>Result</h3>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function log(message, level = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const levelPrefix = {
+                'info': 'ℹ️',
+                'ok': '✅', 
+                'warn': '⚠️',
+                'err': '❌'
+            }[level] || 'ℹ️';
+            
+            logDiv.textContent += `[${timestamp}] ${levelPrefix} ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${level.toUpperCase()}] ${message}`);
+        }
+        
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+            document.getElementById('result').innerHTML = '';
+        }
+        
+        function checkLibraryStatus() {
+            const statusDiv = document.getElementById('library-status');
+            
+            if (typeof window.DocxMerger !== 'undefined') {
+                const methods = Object.keys(window.DocxMerger);
+                statusDiv.innerHTML = `
+                    <div class="success">
+                        ✅ DocxMerger library loaded successfully!<br>
+                        Available methods: ${methods.join(', ')}<br>
+                        mergeDocxFromFiles type: ${typeof window.DocxMerger.mergeDocxFromFiles}
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="error">
+                        ❌ DocxMerger library not found!<br>
+                        Available on window: ${Object.keys(window).filter(key => key.includes('Docx') || key.includes('Merger')).join(', ') || 'None found'}
+                    </div>
+                `;
+            }
+        }
+        
+        async function testStyleMerging() {
+            const fileInput = document.getElementById('fileInput');
+            const files = Array.from(fileInput.files);
+            
+            if (files.length < 2) {
+                log('Please select at least 2 DOCX files for testing', 'err');
+                return;
+            }
+            
+            try {
+                log(`Starting style merging test with ${files.length} files...`);
+                
+                // Get options from form
+                const options = {
+                    mergeStyles: document.getElementById('mergeStyles').checked,
+                    mergeNumbering: document.getElementById('mergeNumbering').checked,
+                    mergeFootnotes: document.getElementById('mergeFootnotes').checked,
+                    pageBreaks: document.getElementById('pageBreaks').checked,
+                    onLog: log
+                };
+                
+                // Set merge mode
+                const mergeMode = document.querySelector('input[name="mergeMode"]:checked').value;
+                if (mergeMode === 'pattern') {
+                    options.pattern = 'MERGE_HERE';
+                } else if (mergeMode === 'start') {
+                    options.insertStart = true;
+                } else if (mergeMode === 'end') {
+                    options.insertEnd = true;
+                }
+                
+                log(`Merge options: ${JSON.stringify(options, null, 2)}`);
+                log('Calling DocxMerger.mergeDocxFromFiles...');
+                
+                const result = await window.DocxMerger.mergeDocxFromFiles(files, options);
+                
+                log('Merge completed successfully!', 'ok');
+                log(`Result type: ${result.constructor.name}, size: ${result.size} bytes`);
+                
+                // Create download link
+                const url = URL.createObjectURL(result);
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Merge Successful!</h4>
+                        <p>Files merged: ${files.map(f => f.name).join(', ')}</p>
+                        <p>Output size: ${(result.size / 1024).toFixed(2)} KB</p>
+                        <a href="${url}" download="merged-with-styles.docx" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+                            📥 Download Merged Document
+                        </a>
+                    </div>
+                `;
+                
+                // Clean up URL after download
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+                
+            } catch (error) {
+                log(`Error during merge: ${error.message}`, 'err');
+                console.error('Full error:', error);
+                
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Merge Failed</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Check library status on page load
+        window.addEventListener('load', checkLibraryStatus);
+    </script>
+</body>
+</html>
