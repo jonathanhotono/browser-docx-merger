@@ -1,7 +1,8 @@
 /*
   browser-doc-merger (framework-style)
   Public API:
-    - mergeDocx(files: (ArrayBuffer|Uint8Array|Blob)[], options: MergeOptions): Promise<Blob>
+    - mergeDocx(files: (ArrayBuffer|Uint8Array|Blob|string)[], options: MergeOptions): Promise<Blob>
+        (string may be a raw base64 string or a data URI: data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,....)
     - mergeDocxFromFiles(files: File[], options: MergeOptions): Promise<Blob>
   UMD global: DocxMerger
 */
@@ -39,7 +40,9 @@ const P = {
   ct: '[Content_Types].xml'
 } as const;
 
-export async function mergeDocx(inputBuffers: (ArrayBuffer|Uint8Array|Blob)[], options: MergeOptions = {}): Promise<Blob>{
+export type DocxInput = ArrayBuffer | Uint8Array | Blob | string;
+
+export async function mergeDocx(inputBuffers: DocxInput[], options: MergeOptions = {}): Promise<Blob>{
   const opt = withDefaults(options);
   const log = (m: string, lvl: 'info'|'ok'|'warn'|'err'='info')=>opt.onLog?.(m,lvl);
 
@@ -531,8 +534,22 @@ function withDefaults(o: MergeOptions): RequiredMergeOptions{
 
 type RequiredMergeOptions = Required<Omit<MergeOptions,'pattern'|'onLog'>> & { pattern: string|null, onLog?: MergeOptions['onLog'] };
 
-async function toBytes(src: ArrayBuffer|Uint8Array|Blob): Promise<Uint8Array>{
+async function toBytes(src: DocxInput): Promise<Uint8Array>{
   if(src instanceof Uint8Array) return src;
+  if(typeof src === 'string'){
+    // Accept either a raw base64 string or a data URI
+    let b64 = src.trim();
+    const dataUriMatch = /^data:.*?;base64,(.*)$/i.exec(b64);
+    if(dataUriMatch){
+      b64 = dataUriMatch[1];
+    }
+    // Remove whitespace & newlines that sometimes appear when copying
+    b64 = b64.replace(/\s+/g,'');
+    if(!isValidBase64(b64)){
+      throw new Error('Invalid base64 DOCX input string');
+    }
+    return decodeBase64(b64);
+  }
   if(src instanceof Blob){
     const anySrc: any = src as any;
     const ab: ArrayBuffer = typeof anySrc.arrayBuffer === 'function' ? await anySrc.arrayBuffer() : await new Response(src).arrayBuffer();
@@ -540,4 +557,40 @@ async function toBytes(src: ArrayBuffer|Uint8Array|Blob): Promise<Uint8Array>{
   }
   // ArrayBuffer
   return new Uint8Array(src);
+}
+
+function decodeBase64(b64: string): Uint8Array{
+  // Use Buffer in Node (if available) else fallback to atob
+  if(typeof Buffer !== 'undefined' && typeof (Buffer as any).from === 'function'){
+    return new Uint8Array((Buffer as any).from(b64, 'base64'));
+  }
+  if(typeof atob === 'function'){
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  throw new Error('No base64 decoder available in this environment');
+}
+
+// Validates canonical base64 (with optional padding) without being overly strict on MIME type context.
+// Rules:
+//  - Only A-Z a-z 0-9 + / allowed in main body
+//  - Optional '=' padding (one or two) only at the end
+//  - Length must be multiple of 4
+//  - Empty string invalid (we expect actual DOCX content)
+function isValidBase64(b64: string): boolean {
+  if(b64.length === 0) return false;
+  if(b64.length % 4 !== 0) return false;
+  // Split into body and padding
+  const paddingMatch = /(=*)$/.exec(b64);
+  const padding = paddingMatch ? paddingMatch[1] : '';
+  if(padding.length > 2) return false;
+  const body = padding? b64.substring(0, b64.length - padding.length) : b64;
+  // Body must not contain '=' and only valid chars
+  if(/=/.test(body)) return false;
+  if(!/^[A-Za-z0-9+/]*$/.test(body)) return false;
+  // If one '=' padding, last 2 chars of body form 2 leftover bytes; if '==', last char forms 1 leftover.
+  // We don't need to re-derive; structural check above is sufficient for most practical uses.
+  return true;
 }

@@ -16,6 +16,7 @@ A comprehensive TypeScript library for merging DOCX files directly in the browse
 - ✅ **Media handling** - Automatic copying and deduplication of images and other media
 - ✅ **Relationship mapping** - Proper handling of document relationships
 - ✅ **Page breaks** - Optional page break insertion between documents
+- ✅ **Multiple input formats** - Accepts `File`, `Blob`, `ArrayBuffer`, `Uint8Array`, **base64 string**, or **base64 data URI**
 
 ## Installation
 
@@ -73,21 +74,32 @@ try {
 </script>
 ```
 
-### Direct Buffer Merging
+### Direct Buffer / Mixed Inputs
 
 ```typescript
 import { mergeDocx } from '@jonathanhotono/browser-docx-merger';
 
-const buffers = [
+const base64Doc = 'UEsDBBQABgAIAAAAIQC...' // trimmed raw base64 (no data uri prefix)
+const dataUriDoc = 'data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,UEsDBBQABg...';
+
+const inputs = [
   new Uint8Array(docx1ArrayBuffer),
-  new Uint8Array(docx2ArrayBuffer)
+  base64Doc,          // raw base64
+  dataUriDoc,         // data URI
+  someBlob,           // Blob
+  anotherArrayBuffer  // ArrayBuffer
 ];
 
-const mergedBlob = await mergeDocx(buffers, {
+const mergedBlob = await mergeDocx(inputs, {
   insertEnd: true,
   mergeStyles: true
 });
 ```
+
+### Base64 Input Notes
+
+- Raw base64 strings and `data:*;base64,...` URIs are both accepted.
+- Whitespace and newlines are stripped automatically.
 
 ## API Reference
 
@@ -101,12 +113,12 @@ Merges multiple DOCX files from File objects.
 
 **Returns:** `Promise<Blob>` - The merged DOCX as a Blob
 
-### `mergeDocx(buffers, options?)`
+### `mergeDocx(inputs, options?)`
 
-Merges multiple DOCX files from ArrayBuffer/Uint8Array/Blob inputs.
+Merges multiple DOCX files from a heterogeneous set of inputs.
 
 **Parameters:**
-- `buffers: (ArrayBuffer|Uint8Array|Blob)[]` - Array of document buffers
+- `inputs: (ArrayBuffer|Uint8Array|Blob|string)[]` - Array of document sources (string = base64 or data URI)
 - `options?: MergeOptions` - Merge configuration
 
 **Returns:** `Promise<Blob>` - The merged DOCX as a Blob
@@ -249,6 +261,10 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - 💡 [Discussions](https://github.com/jonathanhotono/browser-docx-merger/discussions)
 
 ## Changelog
+
+### v1.1.0
+- Added base64 and data URI input support for `mergeDocx`
+- Documentation updated with mixed input examples
 
 ### v1.0.0
 - Initial release
