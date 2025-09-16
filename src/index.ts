@@ -545,9 +545,7 @@ async function toBytes(src: DocxInput): Promise<Uint8Array>{
     }
     // Remove whitespace & newlines that sometimes appear when copying
     b64 = b64.replace(/\s+/g,'');
-    // Basic validation: length multiple of 4 and only base64 chars
-    if(b64.length===0) throw new Error('Empty base64 DOCX string');
-    if(b64.length % 4 !== 0 || /[^A-Za-z0-9+/=]/.test(b64)){
+    if(!isValidBase64(b64)){
       throw new Error('Invalid base64 DOCX input string');
     }
     return decodeBase64(b64);
@@ -573,4 +571,26 @@ function decodeBase64(b64: string): Uint8Array{
     return out;
   }
   throw new Error('No base64 decoder available in this environment');
+}
+
+// Validates canonical base64 (with optional padding) without being overly strict on MIME type context.
+// Rules:
+//  - Only A-Z a-z 0-9 + / allowed in main body
+//  - Optional '=' padding (one or two) only at the end
+//  - Length must be multiple of 4
+//  - Empty string invalid (we expect actual DOCX content)
+function isValidBase64(b64: string): boolean {
+  if(b64.length === 0) return false;
+  if(b64.length % 4 !== 0) return false;
+  // Split into body and padding
+  const paddingMatch = /(=*)$/.exec(b64);
+  const padding = paddingMatch ? paddingMatch[1] : '';
+  if(padding.length > 2) return false;
+  const body = padding? b64.substring(0, b64.length - padding.length) : b64;
+  // Body must not contain '=' and only valid chars
+  if(/=/.test(body)) return false;
+  if(!/^[A-Za-z0-9+/]*$/.test(body)) return false;
+  // If one '=' padding, last 2 chars of body form 2 leftover bytes; if '==', last char forms 1 leftover.
+  // We don't need to re-derive; structural check above is sufficient for most practical uses.
+  return true;
 }

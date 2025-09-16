@@ -100,7 +100,6 @@ const mergedBlob = await mergeDocx(inputs, {
 
 - Raw base64 strings and `data:*;base64,...` URIs are both accepted.
 - Whitespace and newlines are stripped automatically.
-- A validation check ensures the string length is a multiple of 4 and contains only valid base64 characters. An invalid string throws an error.
 
 ## API Reference
 
