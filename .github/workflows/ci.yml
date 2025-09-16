@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  pack:
     runs-on: ubuntu-latest
     
     strategy:
@@ -35,7 +35,7 @@ jobs:
         file dist/*
 
   publish:
-    needs: test
+    needs: pack
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
