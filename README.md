@@ -243,9 +243,9 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- 📝 [Issues](https://github.com/yourusername/browser-docx-merger/issues)
-- 📖 [Documentation](https://github.com/yourusername/browser-docx-merger#readme)
-- 💡 [Discussions](https://github.com/yourusername/browser-docx-merger/discussions)
+- 📝 [Issues](https://github.com/jonathanhotono/browser-docx-merger/issues)
+- 📖 [Documentation](https://github.com/jonathanhotono/browser-docx-merger#readme)
+- 💡 [Discussions](https://github.com/jonathanhotono/browser-docx-merger/discussions)
 
 ## Changelog
 
