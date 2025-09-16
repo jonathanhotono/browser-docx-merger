@@ -219,9 +219,10 @@ npm run dev
 
 ## Demo
 
-See the `demo/` directory for a complete example implementation with drag-and-drop file selection and real-time logging.
+Demo site:
+https://jonathan.hotono.net/docx-merger/
 
-Run the demo locally:
+Run the demo locally on `demo/`:
 
 ```bash
 npm run preview
