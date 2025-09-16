@@ -1,20 +1,20 @@
 {
-  "name": "@yourscope/browser-docx-merger",
+  "name": "@jonathanhotono/browser-docx-merger",
   "version": "1.0.0",
   "private": false,
   "type": "module",
   "license": "MIT",
   "description": "A comprehensive TypeScript library for merging DOCX files in the browser with full style, numbering, and relationship support",
   "keywords": ["docx", "merge", "browser", "typescript", "word", "document", "office"],
-  "author": "Your Name <your.email@example.com>",
+  "author": "Jonathan Hotono <jonathan@hotono.net>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/browser-docx-merger.git"
+    "url": "https://github.com/jonathanhotono/browser-docx-merger.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/browser-docx-merger/issues"
+    "url": "https://github.com/jonathanhotono/browser-docx-merger/issues"
   },
-  "homepage": "https://github.com/yourusername/browser-docx-merger#readme",
+  "homepage": "https://github.com/jonathanhotono/browser-docx-merger#readme",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

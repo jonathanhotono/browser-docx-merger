@@ -2,7 +2,7 @@
 
 A comprehensive TypeScript library for merging DOCX files directly in the browser with full support for styles, numbering, footnotes, endnotes, and media files.
 
-![npm version](https://img.shields.io/npm/v/@yourscope/browser-docx-merger)
+![npm version](https://img.shields.io/npm/v/@jonathanhotono/browser-docx-merger)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)
 
@@ -22,13 +22,13 @@ A comprehensive TypeScript library for merging DOCX files directly in the browse
 ### NPM
 
 ```bash
-npm install @yourscope/browser-docx-merger
+npm install @jonathanhotono/browser-docx-merger
 ```
 
 ### CDN (Browser Global)
 
 ```html
-<script src="https://unpkg.com/@yourscope/browser-docx-merger/dist/index.global.js"></script>
+<script src="https://unpkg.com/@jonathanhotono/browser-docx-merger/dist/index.global.js"></script>
 ```
 
 ## Usage
@@ -36,7 +36,7 @@ npm install @yourscope/browser-docx-merger
 ### ES Modules
 
 ```typescript
-import { mergeDocxFromFiles, triggerDownload } from '@yourscope/browser-docx-merger';
+import { mergeDocxFromFiles, triggerDownload } from '@jonathanhotono/browser-docx-merger';
 
 const files = Array.from(fileInput.files); // File objects from input
 const options = {
@@ -60,7 +60,7 @@ try {
 ### Browser Global
 
 ```html
-<script src="https://unpkg.com/@yourscope/browser-docx-merger/dist/index.global.js"></script>
+<script src="https://unpkg.com/@jonathanhotono/browser-docx-merger/dist/index.global.js"></script>
 <script>
   // Available as window.DocxMerger
   async function mergeFiles(files) {
@@ -76,7 +76,7 @@ try {
 ### Direct Buffer Merging
 
 ```typescript
-import { mergeDocx } from '@yourscope/browser-docx-merger';
+import { mergeDocx } from '@jonathanhotono/browser-docx-merger';
 
 const buffers = [
   new Uint8Array(docx1ArrayBuffer),
